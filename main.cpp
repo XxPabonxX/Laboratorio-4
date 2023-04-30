@@ -1,7 +1,7 @@
 #include "Librerias.h"
 
-int main()
-{
-    cout << "Hello World!" << endl;
+int main(){
+
+
     return 0;
 }

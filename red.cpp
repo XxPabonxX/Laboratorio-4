@@ -1,6 +1,5 @@
 #include "red.h"
 
-red::red()
-{
+red::red(){
 
 }

@@ -3,10 +3,16 @@
 
 #include "Librerias.h"
 
-class red
-{
+class red{
+
 public:
+
     red();
+
+private:
+
+
+
 };
 
 #endif // RED_H

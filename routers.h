@@ -8,11 +8,11 @@ class routers{
 public:
 
     routers();
-    routers(char,char[],int[]);
+    routers(char,char[7],int[7]);
     //void datos(); solo hacen en caso de hacer las modificaciones de conexion y precios
     char GetName();
     bool empty();
-    void mapa(char[],int[]);
+    void mapa(char[7],int[7]);
     ~routers();
 
 private:

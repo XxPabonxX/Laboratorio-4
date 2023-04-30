@@ -6,7 +6,7 @@ routers::routers(){
 
 }
 
-routers::routers(char _nombre, char conexion[], int precios[]){//sobrecarga del constructor
+routers::routers(char _nombre, char conexion[7], int precios[7]){//sobrecarga del constructor
 
     nombre=_nombre;
     char conec;
@@ -35,7 +35,7 @@ bool routers::empty(){//indica si el mapa que contiene las conexiones esta vacio
 
 }
 
-void routers::mapa(char conectados[], int precios[]){//devuelve los elementos del mapa
+void routers::mapa(char conectados[7], int precios[7]){//devuelve los elementos del mapa
 
     int contador=0;
 

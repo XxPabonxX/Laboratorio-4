@@ -1,304 +1,159 @@
 #include "red.h"
 
-//Macro para la ruta de los archivos
-#define PATH "../practica4/archivotxt/"
-
-string filename=PATH;
-
-red::red()//constructor
+Red::Red()
 {
 
 }
 
-string red::txt_copy(string nombre) //Sacar el txt como string
+
+
+void Red::guardarRuta()
 {
-    ifstream archivo;
-    string texto, textofin;
-    archivo.open(filename+nombre, ios::in);//archivo en modo lectura
-    if(archivo.fail())
-    {
-        cout<<"El archivo no se pudo abrir"<<endl;
+    string data;
+
+    for(int i=0; i < len(); ++i){
+        data += topologia[i].getNodo() + ":{";
+        for(int j=0; j < len(); ++j){
+            data += topologia[j].getNodo() + ":";
+            if(topologia[i].getCosto(topologia[j].getNodo()) == INF){ data += "- "; }
+            else{
+                data += to_string(topologia[i].getCosto(topologia[j].getNodo())) + " ";
+            }
+        }
+        data.pop_back();
+        data += "}\n";
+    }
+    data.pop_back();
+    write(data);
+}
+
+void Red::random(const int &numNodos)
+{
+    nombre = "Red_aleatoria";
+
+    srand(time(NULL));
+    vector<char> caracteres;
+
+    for(int i=65; i<=90; ++i){
+        caracteres.push_back(i);
+    }
+
+    for(int i=0; i < numNodos; ++i){
+
+        int random = rand()%caracteres.size();
+        topologia.push_back(Nodo(string(1, caracteres[random])));
+        caracteres.erase(caracteres.begin()+random);
+    }
+
+    for(int i=0; i < topologia.size(); ++i){
+
+        for(int j=0; j<topologia.size(); ++j){
+
+            if(j != i){
+
+                if(rand()%3){
+                    topologia[i].addConexion(topologia[j].getNodo(), 1+rand()%15);
+                }
+
+                else{
+                   topologia[i].addConexion(topologia[j].getNodo(), INF);
+                }
+
+                topologia[j].addConexion(topologia[i].getNodo(), topologia[i].getCosto(topologia[j].getNodo()));
+            }
+        }
+    }
+}
+
+int Red::mejorCamino(const string &rutaInicio, const string &rutaDestino)
+{
+    vector<Nodo> optimizedTopologia = topologia;
+    for(int k=0; k < optimizedTopologia.size(); ++k){
+
+        for(int i=0; i < optimizedTopologia.size(); ++i){
+
+            for(int j=0; j < optimizedTopologia.size(); ++j){
+
+                if(optimizedTopologia[i].getCosto(optimizedTopologia[k].getNodo()) + optimizedTopologia[k].getCosto(optimizedTopologia[j].getNodo()) < optimizedTopologia[i].getCosto(optimizedTopologia[j].getNodo())){
+
+                    optimizedTopologia[i].addConexion(optimizedTopologia[j].getNodo(), optimizedTopologia[i].getCosto(optimizedTopologia[k].getNodo()) + optimizedTopologia[k].getCosto(optimizedTopologia[j].getNodo()));
+                }
+                optimizedTopologia;
+            }
+        }
+    }
+
+    return optimizedTopologia[buscarRuta(rutaInicio)].getCosto(rutaDestino);
+}
+
+void Red::addRuta(const Nodo &nuevoNodo)
+{
+    for(int i=0; i < topologia.size(); ++i){
+        topologia[i].addConexion(nuevoNodo.getNodo(), nuevoNodo.getCosto(topologia[i].getNodo()));
+    }
+    topologia.push_back(nuevoNodo);
+}
+
+void Red::deleteRuta(const string &elimNodo)
+{
+    for(int i=0; i < topologia.size(); ++i){
+        topologia[i].deleteConexion(elimNodo);
+    }
+    topologia.erase(topologia.begin() + buscarRuta(elimNodo));
+}
+
+bool Red::salir(const string &nombre)
+{
+    for(int i=0; i < topologia.size(); ++i){
+        if(topologia[i].getNodo() == nombre){
+            return true;
+        }
+    }
+    return false;
+}
+
+const vector<string> Red::nombres() const
+{
+    vector<string> nombres;
+    for(int i=0; i < topologia.size(); ++i){
+        nombres.push_back(topologia[i].getNodo());
+    }
+    return nombres;
+}
+
+int Red::len() const
+{
+    return topologia.size();
+}
+
+/***/
+void Red::write(const string &data)
+{
+
+
+    ofstream file;
+
+    file.open("../networks/" + nombre);
+    if (file.is_open()){
+
+        file << data;
+
+        file.close();
+    }
+    else{
+        cout << "Error al crear " << nombre << endl;
         exit(1);
     }
-
-    while(!archivo.eof())//Mientras no llegue a en End Of File
-    {
-        getline(archivo,texto);
-        textofin+=texto+"\n";
-    }
-    archivo.close();
-    int len=textofin.length()-1;
-    textofin.erase(len);
-    return textofin;
 }
 
-bool red::exis_router(char nombre) //verifica si el router existe en la lista de la red
+int Red::buscarRuta(const string &nombreRuta)
 {
-    bool existe=false;
-    char caracter;
-    for(int i=0;i<7;i++)
-    {
-        caracter=enrutadores[i];
-        if(caracter==nombre)
-        {
-            existe=true;
+    for(int i=0; i < topologia.size(); ++i){
+        if(topologia[i].getNodo() == nombreRuta){
+            return i;
         }
     }
-    return existe;
+
+    return 0;
 }
 
-int red::pos_router(char name, char nombres[7]) //entrega la posicion de un char en un arreglo
-{
-    int pos=0;
-    char caracter;
-    for(int i=0;i<7;i++)
-    {
-        caracter=nombres[i];
-        if(caracter==name)
-        {
-            pos=i;
-            return pos;
-        }
-    }
-    return pos;
-}
-
-void red::info_routers(string texto, char nombres[7], char conectados[7][7], int costos[7][7]) //entrega toda la informacion para crear las instancias de routers
-{
-    vector<string> lineas;
-    int longi=texto.length(), posi, posi2, precio;
-    string caracter, linea, linea2,precio_string;
-    char carac,carac2;
-    for (int i=0;i<=longi;i++)//se separa por lineas
-    {
-        caracter = texto[i];
-        if(caracter != "\n" and i!=longi)
-        {
-            linea+=caracter;
-        }
-        else if(i==longi)
-        {
-            lineas.push_back(linea);
-            linea.clear();
-        }
-        else
-        {
-            lineas.push_back(linea);
-            linea.clear();
-        }
-    }
-    bool existe;
-    int contador=-1;
-    for(auto i=lineas.begin();i != lineas.end(); i++)//se sacan los datos
-    {
-        linea=*i;
-        carac=linea[0];
-        existe=exis_router(carac);
-        if(existe==false)
-        {
-            contador++;
-            nombres[contador]=carac;
-            enrutadores[contador]=carac;
-        }
-        carac2=linea[1];
-        existe=exis_router(carac2);
-        if(existe==false)
-        {
-            contador++;
-            nombres[contador]=carac2;
-            enrutadores[contador]=carac2;
-        }
-        posi=pos_router(carac,nombres);
-        posi2=pos_router(carac2,nombres);
-        conectados[posi][posi2]=carac2;
-        longi=linea.length();
-        for(int k=3;k<longi;k++)
-        {
-            precio_string+=linea[k];
-        }
-        precio=atoi(precio_string.c_str());
-        precio_string.clear();
-        costos[posi][posi2]=precio;
-    }
-}
-
-int red::conta_routers(char routers[7])//cuenta la cantidad de elementos usados en un arreglo
-{
-    char caracter;
-    int contador=0;
-    for(int i=0;i<7;i++)
-    {
-        caracter=routers[i];
-        if(caracter!=0)
-        {
-            contador++;
-        }
-        else
-        {
-            return contador;
-        }
-    }
-    return contador;
-}
-
-void red::conexiones_red(routers enrutadores_insta[7], char conexiones[7][7], int precios[7][7])//Recive la lista de instancias y devulve los arreglos de conexiones y precios
-{
-    char caracter;
-    int pos;
-    for (int i=0;i<7;i++)
-    {
-        routers actu=enrutadores_insta[i];
-        if(actu.GetName()!=0)
-        {
-            if(actu.empty()==false)
-            {
-                char conectados[7]={0,0,0,0,0,0,0};
-                int price[7]={0,0,0,0,0,0,0};
-                actu.mapa(conectados,price);
-                caracter=actu.GetName();
-                pos=pos_router(caracter,enrutadores);
-                for(int j=0;j<7;j++)
-                {
-                    conexiones[pos][j]=conectados[j];
-                    precios[pos][j]=price[j];
-                }
-            }
-        }
-    }
-}
-
-void red::ruta_coste(char origen, char destino, char conectados[7][7], int precios[7][7])//SN Devuelve el costo y la ruta mas efectiva
-{
-    //se recibe el origen y el destino, teniendo en cuenta la informacion de las clases se imprime el costo minimo ademas de la ruta mas eficiente
-    bool exis_ori=exis_router(origen), exis_dest=exis_router(destino);
-    if (exis_dest==true and exis_ori==true)
-    {
-        //Algoritmo para hallar costos y rutas
-        string ruta_fin;
-        int costo_fin;
-
-    }
-    else if (exis_dest==false and exis_ori==true)
-    {
-        cout<<"El destino ingresado no existe"<<endl<<endl;
-    }
-    else if (exis_dest==true and exis_ori==false)
-    {
-        cout<<"El origen ingresado no existe"<<endl<<endl;
-    }
-    else
-    {
-        cout<<"No existe ninguno de los 2 enrutadores ingresados"<<endl<<endl;
-    }
-}
-
-bool red::verificar(char conectados[7][7]) //verifica que haya almenos 2 routers y por lo menos alguna conexion
-{
-    bool funciona=false;
-    int num_router=conta_routers(enrutadores);
-    if(num_router<2)
-    {
-        funciona=false;
-        return funciona;
-    }
-    char caracter;
-    for(int i=0;i<7;i++)
-    {
-        for(int j=0;j<7;j++)
-        {
-            caracter=conectados[i][j];
-            if(caracter!=0)
-            {
-                funciona=true;
-                return funciona;
-            }
-        }
-    }
-    return funciona;
-}
-
-void red::modificar(char *nombre, char conected[7], int costos[7])//agregar routers
-{
-    int num_routers=conta_routers(enrutadores);
-    if(num_routers==7)
-    {
-        cout<<"Se ha alcanzado el numero maximo de enrutadores en la red (7 enrutadores), para agregar otro debe eliminar alguno de los existentes"<<endl;
-    }
-    else
-    {
-        char neim, siono;
-        int cost_now;
-        cout<<"Ingrese el nombre del nuevo enrutador: ";cin>>neim;
-        cout<<endl;
-        *nombre=neim;
-        if(num_routers>0)
-        {
-            cout<<"A continuacion ingrese s/n para indicar si esta conectado al router correspondiente y luego ingrese el respectivo costo de envio en caso de existir dicha conexion."<<endl;
-            for(int i=0;i<num_routers;i++)
-            {
-                cout<<"El enrutador en creacion esta conectado con el enrutador "<<enrutadores[i]<<"? ";cin>>siono;
-                while(siono != 's' or siono != 'S' or siono != 'n' or siono != 'N')
-                {
-                    cout<<"Caracter invalido."<<endl;
-                    cout<<"El enrutador en creacion esta conectado con el enrutador "<<enrutadores[i]<<"? ";cin>>siono;
-                }
-                if(siono=='s' or siono=='S')
-                {
-                    conected[i]=enrutadores[i];
-                    cout<<"Cual es el costo de envio hacia el enrutador "<<enrutadores[i]<<"? ";cin>>cost_now;
-                    while(cost_now<0)
-                    {
-                        cout<<"El costo de envio debe ser mayor a 0."<<endl;
-                        cout<<"Cual es el costo de envio hacia el enrutador "<<enrutadores[i]<<"? ";cin>>cost_now;
-                    }
-                    costos[i]=cost_now;
-                    cout<<endl;
-                }
-            }
-            enrutadores[num_routers]=neim;
-            cout<<"El router ha sido creado con exito"<<endl<<endl;
-        }
-    }
-
-}
-
-int red::modificar()//eliminar routers
-{
-    int num_routers=conta_routers(enrutadores);
-    if(num_routers==0)
-    {
-        cout<<"Actualmente no existe ningun enrutador por lo que es imposible realizar esta accion."<<endl;
-    }
-    else
-    {
-        char nombre;
-        int posi;
-        cout<<"Ingrese el nombre del enrutador a eliminar: ";cin>>nombre;
-        bool existe=exis_router(nombre);
-        if(existe==false)
-        {
-            cout<<"No existe ningun router con ese nombre registrado en la red."<<endl;
-        }
-        else
-        {
-            posi=pos_router(nombre,enrutadores);
-            int a_correr=(conta_routers(enrutadores)-1)-posi;
-            for(int i=posi;i<(posi+a_correr+1);i++)
-            {
-                enrutadores[posi]=enrutadores[posi+1];
-            }
-            return posi;
-        }
-    }
-}
-
-int red::cant_routers_red()//devuelve la cantidad de routers actualmente en la red
-{
-    int canti=conta_routers(enrutadores);
-    return canti;
-}
-
-red::~red()//destructor
-{
-
-}

@@ -10,8 +10,8 @@
 #include <map>
 #include <iterator>
 #include <windows.h>
-#include <routers.h>
-#include <red.h>
+#include "nodo.h"
+#include "red.h"
 
 using namespace std;
 

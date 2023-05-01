@@ -5,10 +5,10 @@ CONFIG -= qt
 
 SOURCES += \
         main.cpp \
-        red.cpp \
-        routers.cpp
+        nodo.cpp \
+        red.cpp
 
 HEADERS += \
     Librerias.h \
-    red.h \
-    routers.h
+    nodo.h \
+    red.h
